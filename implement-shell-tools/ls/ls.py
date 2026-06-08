@@ -1,37 +1,53 @@
 #!/usr/bin/env python3
 
+import argparse
 import locale
 import os
 import sys
 
 
-def parse_args(args):
-    one_per_line = False
-    show_all = False
-    paths = []
+class LsArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        print(f"ls: {message}", file=sys.stderr)
+        print("Usage: ls.py -1 [-a] [path]", file=sys.stderr)
+        sys.exit(1)
 
+
+def expand_combined_flags(args, valid_flags):
+    expanded = []
     for arg in args:
-        if arg.startswith("-") and arg != "-":
-            for flag in arg[1:]:
-                if flag == "1":
-                    one_per_line = True
-                elif flag == "a":
-                    show_all = True
-                else:
+        if arg == "-":
+            expanded.append(arg)
+            continue
+
+        if arg.startswith("-") and not arg.startswith("--") and len(arg) > 2:
+            flags = arg[1:]
+            for flag in flags:
+                if flag not in valid_flags:
                     print(f"ls: invalid option -- '{flag}'", file=sys.stderr)
                     sys.exit(1)
-        else:
-            paths.append(arg)
+                expanded.append(f"-{flag}")
+            continue
 
-    if not one_per_line:
+        expanded.append(arg)
+
+    return expanded
+
+
+def parse_args(args):
+    parser = LsArgumentParser(add_help=False)
+    parser.add_argument("-1", dest="one_per_line", action="store_true")
+    parser.add_argument("-a", dest="show_all", action="store_true")
+    parser.add_argument("path", nargs="?", default=".")
+
+    expanded_args = expand_combined_flags(args, {"1", "a"})
+    parsed = parser.parse_args(expanded_args)
+
+    if not parsed.one_per_line:
         print("Usage: ls.py -1 [-a] [path]", file=sys.stderr)
         sys.exit(1)
 
-    if len(paths) > 1:
-        print("Usage: ls.py -1 [-a] [path]", file=sys.stderr)
-        sys.exit(1)
-
-    return show_all, (paths[0] if paths else ".")
+    return parsed.show_all, parsed.path
 
 
 def list_entries(path, show_all):
@@ -45,7 +61,7 @@ def list_entries(path, show_all):
         return
 
     if show_all:
-        entries = [".", ".."] + entries
+        entries = entries + [".", ".."]
     else:
         entries = [name for name in entries if not name.startswith(".")]
 
