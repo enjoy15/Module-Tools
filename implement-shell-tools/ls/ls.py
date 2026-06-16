@@ -7,15 +7,12 @@ import sys
 
 
 def main():
-    parser = argparse.ArgumentParser(add_help=False, usage="ls.py -1 [-a] [path]")
+    parser = argparse.ArgumentParser(add_help=False, usage="ls.py [-1] [-a] [path]")
     parser.add_argument("-1", dest="one_per_line", action="store_true")
     parser.add_argument("-a", dest="show_all", action="store_true")
     parser.add_argument("path", nargs="?", default=".")
 
     args = parser.parse_args()
-
-    if not args.one_per_line:
-        parser.error("the following arguments are required: -1")
 
     try:
         entries = os.listdir(args.path)
