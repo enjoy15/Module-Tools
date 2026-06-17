@@ -29,8 +29,13 @@ def main():
         entries = [name for name in entries if not name.startswith(".")]
 
     locale.setlocale(locale.LC_COLLATE, "")
-    for entry in sorted(entries, key=locale.strxfrm):
-        print(entry)
+    sorted_entries = sorted(entries, key=locale.strxfrm)
+
+    if args.one_per_line:
+        for entry in sorted_entries:
+            print(entry)
+    else:
+        print("  ".join(sorted_entries))
 
 
 if __name__ == "__main__":
